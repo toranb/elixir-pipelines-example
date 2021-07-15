@@ -1,5 +1,5 @@
 defmodule Pipelinez.Demo.Pipeline do
-  use Pipelinez.Demo.StepBuilder
+  use Pipelinez.StepBuilder, token: Pipelinez.Demo.Token
 
   step Pipelinez.Demo.One
   step Pipelinez.Demo.Two

@@ -1,7 +1,7 @@
-defmodule Pipelinez.Demo.StepBuilder do
+defmodule Pipelinez.StepBuilder do
   defmacro __before_compile__(env) do
     steps = Module.get_attribute(env.module, :steps)
-    body = Pipelinez.Demo.StepBuilder.compile_body(steps)
+    body = __MODULE__.compile_body(steps)
 
     quote do
       defp __do_call__(token) do
@@ -10,13 +10,18 @@ defmodule Pipelinez.Demo.StepBuilder do
     end
   end
 
-  defmacro __using__(_opts \\ []) do
+  defmacro __using__(opts) do
+    token_module = opts[:token]
+
     quote do
-      import Pipelinez.Demo.StepBuilder
+      import unquote(__MODULE__)
 
       Module.register_attribute(__MODULE__, :steps, accumulate: true)
 
-      @before_compile Pipelinez.Demo.StepBuilder
+      @before_compile unquote(__MODULE__)
+
+      Module.register_attribute(__MODULE__, :token, persist: true)
+      @token unquote(token_module)
 
       def call(token) do
         __do_call__(token)
@@ -37,14 +42,15 @@ defmodule Pipelinez.Demo.StepBuilder do
   end
 
   def compile_step(step, already_compiled_statements) do
+    token_module = quote do: @token
     current_call = quote do: unquote(step).call(token)
 
     quote do
       case unquote(current_call) do
-        %Pipelinez.Demo.Token{halted: true} = token ->
+        %unquote(token_module){halted: true} = token ->
           token
 
-        %Pipelinez.Demo.Token{} = token ->
+        %unquote(token_module){} = token ->
           unquote(already_compiled_statements)
 
         _ ->

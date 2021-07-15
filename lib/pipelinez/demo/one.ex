@@ -1,5 +1,5 @@
 defmodule Pipelinez.Demo.One do
-  @behaviour Pipelinez.Demo.Step
+  @behaviour Pipelinez.Step
 
   alias Pipelinez.Demo.Token
 
