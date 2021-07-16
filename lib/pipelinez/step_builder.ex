@@ -48,9 +48,13 @@ defmodule Pipelinez.StepBuilder do
     quote do
       case unquote(current_call) do
         %unquote(token_module){halted: true} = token ->
+          logger_module = Module.concat(["Pipelinez.Logger"])
+          logger_module.log(unquote(step), token)
           token
 
         %unquote(token_module){} = token ->
+          logger_module = Module.concat(["Pipelinez.Logger"])
+          logger_module.log(unquote(step), token)
           unquote(already_compiled_statements)
 
         _ ->
