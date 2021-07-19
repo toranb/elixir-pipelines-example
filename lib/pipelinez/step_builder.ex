@@ -11,6 +11,7 @@ defmodule Pipelinez.StepBuilder do
   end
 
   defmacro __using__(opts) do
+    log_token = opts[:log]
     token_module = opts[:token]
 
     quote do
@@ -22,6 +23,9 @@ defmodule Pipelinez.StepBuilder do
 
       Module.register_attribute(__MODULE__, :token, persist: true)
       @token unquote(token_module)
+
+      Module.register_attribute(__MODULE__, :log, persist: true)
+      @log unquote(log_token)
 
       def call(token) do
         __do_call__(token)
@@ -42,19 +46,26 @@ defmodule Pipelinez.StepBuilder do
   end
 
   def compile_step(step, already_compiled_statements) do
+    log_token = quote do: @log
     token_module = quote do: @token
     current_call = quote do: unquote(step).call(token)
 
     quote do
       case unquote(current_call) do
         %unquote(token_module){halted: true} = token ->
-          logger_module = Module.concat(["Pipelinez.Logger"])
-          logger_module.log(unquote(step), token)
+          if unquote(log_token) == true do
+            logger_module = Module.concat(["Pipelinez.Logger"])
+            logger_module.log(unquote(step), token)
+          end
+
           token
 
         %unquote(token_module){} = token ->
-          logger_module = Module.concat(["Pipelinez.Logger"])
-          logger_module.log(unquote(step), token)
+          if unquote(log_token) == true do
+            logger_module = Module.concat(["Pipelinez.Logger"])
+            logger_module.log(unquote(step), token)
+          end
+
           unquote(already_compiled_statements)
 
         _ ->
